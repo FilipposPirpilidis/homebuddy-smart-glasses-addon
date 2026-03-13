@@ -61,7 +61,7 @@ struct CLIOptions {
                 index += 1
                 guard index < args.count else { throw CLIError.missingValue("--mode") }
                 let mode = args[index].trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
-                guard mode == "transcription" || mode == "agent" else { throw CLIError.invalidValue("--mode") }
+                guard mode == "transcription" || mode == "agent" || mode == "agent_text" else { throw CLIError.invalidValue("--mode") }
                 options.mode = mode
             case "--ha-token":
                 index += 1
@@ -668,6 +668,26 @@ final class HomeAssistantWebSocketClient: NSObject, URLSessionWebSocketDelegate,
         }
     }
 
+    func sendText(_ text: String) {
+        writeQueue.async { [weak self] in
+            guard let self else { return }
+            do {
+                guard let sessionID = self.stateQueue.sync(execute: { self.sessionID }) else {
+                    throw AppError.missingSessionID
+                }
+                try self.sendCommandAsync(
+                    type: "homebuddy_smart_glasses_service/text_input",
+                    payload: [
+                        "session_id": sessionID,
+                        "text": text
+                    ]
+                )
+            } catch {
+                self.fail(error)
+            }
+        }
+    }
+
     func finish() {
         writeQueue.async { [weak self] in
             guard let self else { return }
@@ -925,7 +945,7 @@ func requestMicrophonePermission() -> Bool {
 }
 
 func printUsageAndExit() -> Never {
-    print("Usage: homebuddy-smart-glasses-streamer [--scheme ws|wss] [--host HOST] [--port PORT] [--codec pcm16|opus] [--mode transcription|agent] --ha-token TOKEN [--language LANG]")
+    print("Usage: homebuddy-smart-glasses-streamer [--scheme ws|wss] [--host HOST] [--port PORT] [--codec pcm16|opus] [--mode transcription|agent|agent_text] --ha-token TOKEN [--language LANG]")
     print("  Default target: ws://homeassistant.local:8123/api/websocket")
     exit(0)
 }
@@ -935,22 +955,29 @@ struct HomeBuddySmartGlassesStreamer {
     static func main() {
         do {
             let options = try CLIOptions.parse(from: Array(CommandLine.arguments.dropFirst()))
-
-            guard requestMicrophonePermission() else {
-                throw AppError.microphoneAccessDenied
-            }
-
             let cfg = AudioConfig.make(codec: options.codec)
-            let recorder = try PushToTalkRecorder(cfg: cfg)
-            let keyboard = KeyboardMonitor()
             let stateQueue = DispatchQueue(label: "homebuddy.smartglasses.app.state")
             let appState = AppState()
+            let usesAudio = options.mode != "agent_text"
+
+            if usesAudio {
+                guard requestMicrophonePermission() else {
+                    throw AppError.microphoneAccessDenied
+                }
+            }
+
+            let recorder = usesAudio ? try PushToTalkRecorder(cfg: cfg) : nil
+            let keyboard = usesAudio ? KeyboardMonitor() : nil
 
             print("Live streaming ready.")
-            print("Streaming microphone audio continuously. Press ESC to quit.")
             print("Target: \(options.scheme)://\(options.host):\(options.port)")
             print("Audio codec: \(options.codec)")
             print("Mode: \(options.mode)")
+            if usesAudio {
+                print("Streaming microphone audio continuously. Press ESC to quit.")
+            } else {
+                print("Type a message and press ENTER. Type /exit to quit.")
+            }
 
             let streamingClient = HomeAssistantWebSocketClient(
                 scheme: options.scheme,
@@ -991,26 +1018,45 @@ struct HomeBuddySmartGlassesStreamer {
             stateQueue.sync {
                 appState.client = streamingClient
             }
-            print("[rec] LIVE")
-            recorder.start { chunk in
-                streamingClient.sendAudioChunk(chunk)
-            }
+            if let recorder, let keyboard {
+                print("[rec] LIVE")
+                recorder.start { chunk in
+                    streamingClient.sendAudioChunk(chunk)
+                }
 
-            keyboard.onEscDown = {
+                keyboard.onEscDown = {
+                    stateQueue.sync {
+                        let durationMs = recorder.stop()
+                        print("\n[rec] STOP  (\(durationMs) ms)")
+                        appState.client?.finish()
+                        appState.client?.cancel()
+                        appState.client = nil
+                    }
+                    print("\nBye.")
+                    keyboard.stop()
+                    CFRunLoopStop(CFRunLoopGetMain())
+                }
+
+                try keyboard.start()
+                CFRunLoopRun()
+            } else {
+                while let line = readLine(strippingNewline: true) {
+                    let text = line.trimmingCharacters(in: .whitespacesAndNewlines)
+                    if text.isEmpty {
+                        continue
+                    }
+                    if text == "/exit" {
+                        break
+                    }
+                    streamingClient.sendText(text)
+                }
                 stateQueue.sync {
-                    let durationMs = recorder.stop()
-                    print("\n[rec] STOP  (\(durationMs) ms)")
                     appState.client?.finish()
                     appState.client?.cancel()
                     appState.client = nil
                 }
-                print("\nBye.")
-                keyboard.stop()
-                CFRunLoopStop(CFRunLoopGetMain())
+                print("Bye.")
             }
-
-            try keyboard.start()
-            CFRunLoopRun()
         } catch {
             fputs("[fatal] \(error)\n", stderr)
             exit(1)

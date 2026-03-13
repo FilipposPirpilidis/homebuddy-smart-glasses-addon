@@ -28,6 +28,7 @@ from .const import (
     DEFAULT_ADDON_PORT,
     DOMAIN,
     MODE_AGENT,
+    MODE_AGENT_TEXT,
     MODE_TRANSCRIPTION,
 )
 
@@ -113,8 +114,10 @@ class HomeBuddyBridgeSession:
         self.conversation_id: str | None = None
 
     async def connect(self, language: str, codec: str, rate: int, width: int, channels: int) -> None:
-        self.reader, self.writer = await asyncio.open_connection(self.upstream.host, self.upstream.port)
         self.language = language
+        if self.mode == MODE_AGENT_TEXT:
+            return
+        self.reader, self.writer = await asyncio.open_connection(self.upstream.host, self.upstream.port)
         await self.send("transcribe", {"language": language, "mode": self.mode})
         await self.send("audio-start", {"codec": codec, "rate": rate, "width": width, "channels": channels})
         self.read_task = self.hass.loop.create_task(self.read_loop())
@@ -159,6 +162,8 @@ class HomeBuddyBridgeSession:
         await self.writer.drain()
 
     async def send_audio_chunk(self, audio_b64: str, rate: int, width: int, channels: int) -> None:
+        if self.mode == MODE_AGENT_TEXT:
+            raise RuntimeError("audio_chunk is not supported in agent_text mode")
         payload = base64.b64decode(audio_b64)
         await self.send("audio-chunk", {"rate": rate, "width": width, "channels": channels}, payload)
 
@@ -171,11 +176,17 @@ class HomeBuddyBridgeSession:
         if self.mode != MODE_AGENT:
             self.send_stream_event({"type": "transcript", "text": transcript})
             return
+        await self.handle_agent_text(transcript)
+
+    async def handle_agent_text(self, text: str) -> None:
+        text = text.strip()
+        if not text:
+            return
 
         try:
             result = await conversation.async_converse(
                 hass=self.hass,
-                text=transcript,
+                text=text,
                 conversation_id=self.conversation_id,
                 context=self.connection.context({"id": self.subscription_id, "type": f"{DOMAIN}/open_stream"}),
                 language=self.language,
@@ -183,14 +194,14 @@ class HomeBuddyBridgeSession:
             )
         except Exception as err:
             LOGGER.exception("Assist agent request failed")
-            self.send_stream_event({"type": "error", "message": str(err), "transcript": transcript})
+            self.send_stream_event({"type": "error", "message": str(err), "transcript": text})
             return
 
         self.conversation_id = result.conversation_id
         self.send_stream_event(
             {
                 "type": "agent_response",
-                "transcript": transcript,
+                "transcript": text,
                 "response": _extract_agent_response_text(result),
                 "conversation_id": result.conversation_id,
                 "continue_conversation": result.continue_conversation,
@@ -255,6 +266,8 @@ def _merged_entry_config(entry: ConfigEntry) -> dict[str, Any]:
 
 def _normalize_stream_mode(value: str) -> str:
     normalized = (value or "").strip().lower()
+    if normalized == MODE_AGENT_TEXT:
+        return MODE_AGENT_TEXT
     if normalized == MODE_AGENT:
         return MODE_AGENT
     return MODE_TRANSCRIPTION
@@ -308,6 +321,7 @@ def _register_commands(hass: HomeAssistant) -> None:
         return
     websocket_api.async_register_command(hass, websocket_open_stream)
     websocket_api.async_register_command(hass, websocket_audio_chunk)
+    websocket_api.async_register_command(hass, websocket_text_input)
     websocket_api.async_register_command(hass, websocket_close_stream)
     hass.data[DOMAIN][DATA_COMMANDS_REGISTERED] = True
 
@@ -316,7 +330,7 @@ def _register_commands(hass: HomeAssistant) -> None:
     {
         vol.Required("id"): int,
         vol.Required("type"): f"{DOMAIN}/open_stream",
-        vol.Optional("mode", default=MODE_TRANSCRIPTION): vol.In([MODE_TRANSCRIPTION, MODE_AGENT]),
+        vol.Optional("mode", default=MODE_TRANSCRIPTION): vol.In([MODE_TRANSCRIPTION, MODE_AGENT, MODE_AGENT_TEXT]),
         vol.Optional("language", default="en"): str,
         vol.Optional("codec", default="pcm16"): str,
         vol.Optional("rate", default=16000): int,
@@ -374,7 +388,32 @@ async def websocket_audio_chunk(hass: HomeAssistant, connection: ActiveConnectio
     if session is None:
         connection.send_error(msg["id"], "not_found", "Unknown session_id")
         return
-    await session.send_audio_chunk(msg["audio"], msg["rate"], msg["width"], msg["channels"])
+    try:
+        await session.send_audio_chunk(msg["audio"], msg["rate"], msg["width"], msg["channels"])
+    except RuntimeError as err:
+        connection.send_error(msg["id"], "invalid_mode", str(err))
+        return
+    connection.send_result(msg["id"])
+
+
+@websocket_api.websocket_command(
+    {
+        vol.Required("id"): int,
+        vol.Required("type"): f"{DOMAIN}/text_input",
+        vol.Required("session_id"): str,
+        vol.Required("text"): str,
+    }
+)
+@websocket_api.async_response
+async def websocket_text_input(hass: HomeAssistant, connection: ActiveConnection, msg: dict[str, Any]) -> None:
+    session: HomeBuddyBridgeSession | None = hass.data[DOMAIN][DATA_SESSIONS].get(msg["session_id"])
+    if session is None:
+        connection.send_error(msg["id"], "not_found", "Unknown session_id")
+        return
+    if session.mode != MODE_AGENT_TEXT:
+        connection.send_error(msg["id"], "invalid_mode", "text_input is only supported in agent_text mode")
+        return
+    await session.handle_agent_text(msg["text"])
     connection.send_result(msg["id"])
 
 
@@ -392,6 +431,7 @@ async def websocket_close_stream(hass: HomeAssistant, connection: ActiveConnecti
     if session is None:
         connection.send_error(msg["id"], "not_found", "Unknown session_id")
         return
-    await session.send("audio-stop", {})
+    if session.writer is not None:
+        await session.send("audio-stop", {})
     await session.close()
     connection.send_result(msg["id"])

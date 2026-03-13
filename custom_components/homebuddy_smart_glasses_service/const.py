@@ -12,3 +12,4 @@ DEFAULT_ADDON_PORT = 10310
 
 MODE_TRANSCRIPTION = "transcription"
 MODE_AGENT = "agent"
+MODE_AGENT_TEXT = "agent_text"

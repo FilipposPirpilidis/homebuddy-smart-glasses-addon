@@ -19,6 +19,7 @@ When the client opens a websocket stream through Home Assistant, it must declare
 
 - `transcription`: stream partial and final transcripts
 - `agent`: when a final transcript is produced, route it to the configured Home Assistant Assist agent and send both the transcript and the Assist reply back to the client
+- `agent_text`: do not use audio/STT; wait for text messages from the client, route them directly to the configured Home Assistant Assist agent, and send the Assist reply back to the client
 
 The Assist agent is selected in the integration configuration from the agents currently available in Home Assistant.
 
@@ -106,6 +107,7 @@ After the normal Home Assistant authentication handshake, use these commands:
 
 - `homebuddy_smart_glasses_service/open_stream`
 - `homebuddy_smart_glasses_service/audio_chunk`
+- `homebuddy_smart_glasses_service/text_input`
 - `homebuddy_smart_glasses_service/close_stream`
 
 ### `open_stream`
@@ -122,10 +124,22 @@ Agent mode:
 {"id":1,"type":"homebuddy_smart_glasses_service/open_stream","mode":"agent","language":"en","codec":"opus","rate":16000,"width":2,"channels":1}
 ```
 
+Text-only agent mode:
+
+```json
+{"id":1,"type":"homebuddy_smart_glasses_service/open_stream","mode":"agent_text","language":"en"}
+```
+
 ### `audio_chunk`
 
 ```json
 {"id":2,"type":"homebuddy_smart_glasses_service/audio_chunk","session_id":"139901234560000:1","rate":16000,"width":2,"channels":1,"audio":"<base64-audio>"}
+```
+
+### `text_input`
+
+```json
+{"id":3,"type":"homebuddy_smart_glasses_service/text_input","session_id":"139901234560000:1","text":"turn on the kitchen lights"}
 ```
 
 ### Events
@@ -152,4 +166,4 @@ Final transcript plus Assist reply in `agent` mode:
 
 - Partial transcript events are still emitted in agent mode.
 - The add-on itself remains an STT service. Assist routing happens in the Home Assistant integration after final STT output is received.
-- The integration stores the selected Assist agent and uses that agent for every `agent` mode stream.
+- The integration stores the selected Assist agent and uses that agent for every `agent` or `agent_text` stream.
