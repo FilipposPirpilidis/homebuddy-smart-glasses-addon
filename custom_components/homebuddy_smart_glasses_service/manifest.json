@@ -1,0 +1,12 @@
+{
+  "domain": "homebuddy_smart_glasses_service",
+  "name": "HomeBuddy Smart Glasses Service",
+  "version": "1.0.0",
+  "config_flow": true,
+  "integration_type": "service",
+  "documentation": "https://github.com/FilipposPirpilidis/homebuddy-smart-glasses-addon",
+  "issue_tracker": "https://github.com/FilipposPirpilidis/homebuddy-smart-glasses-addon/issues",
+  "dependencies": ["conversation", "websocket_api"],
+  "codeowners": ["@FilipposPirpilidis"],
+  "iot_class": "local_push"
+}

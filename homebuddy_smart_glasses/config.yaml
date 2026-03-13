@@ -1,0 +1,62 @@
+name: "HomeBuddy Smart Glasses Service"
+version: "1.0.0"
+slug: "homebuddy_smart_glasses"
+description: "Speech-to-text add-on for HomeBuddy Smart Glasses with Vosk, OpenAI, and WhisplayBot."
+url: "https://github.com/FilipposPirpilidis/homebuddy-smart-glasses-addon"
+arch:
+  - amd64
+  - aarch64
+  - armv7
+startup: services
+boot: auto
+init: false
+ingress: true
+ingress_port: 8099
+ingress_stream: true
+homeassistant_api: false
+hassio_api: false
+ports:
+  10310/tcp: 10310
+ports_description:
+  10310/tcp: "HomeBuddy Smart Glasses internal bridge port"
+options:
+  server_host: "0.0.0.0"
+  server_port: 10310
+  accepted_audio_codecs:
+    - "pcm16"
+    - "opus"
+  language: "en"
+  stt_backend: "vosk"
+  model_variant: "0.15"
+  model_path: "/models/vosk-model-small-en-us-0.15"
+  openai_api_key: ""
+  openai_realtime_model: "gpt-realtime-mini"
+  openai_transcription_model: "gpt-4o-mini-transcribe"
+  openai_prompt: ""
+  whisplaybot_recognize_url: "http://192.168.2.29:8801/recognize"
+  whisplaybot_timeout_seconds: 60
+  whisplaybot_partial_window_seconds: 2
+  whisplaybot_partial_inference_seconds: 3
+  whisplaybot_auto_final_silence_ms: 1400
+  whisplaybot_auto_final_min_seconds: 3
+  whisplaybot_auto_final_silence_level: 900
+schema:
+  server_host: str
+  server_port: port
+  accepted_audio_codecs:
+    - str
+  language: str
+  stt_backend: str
+  model_variant: str
+  model_path: str
+  openai_api_key: str
+  openai_realtime_model: str
+  openai_transcription_model: str
+  openai_prompt: str
+  whisplaybot_recognize_url: str
+  whisplaybot_timeout_seconds: int
+  whisplaybot_partial_window_seconds: int
+  whisplaybot_partial_inference_seconds: int
+  whisplaybot_auto_final_silence_ms: int
+  whisplaybot_auto_final_min_seconds: int
+  whisplaybot_auto_final_silence_level: int

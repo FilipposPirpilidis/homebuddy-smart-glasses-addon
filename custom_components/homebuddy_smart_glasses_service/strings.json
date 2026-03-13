@@ -1,0 +1,28 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "HomeBuddy Smart Glasses Service",
+        "description": "Configure how Home Assistant connects to the HomeBuddy Smart Glasses add-on.",
+        "data": {
+          "addon_host": "Add-on host",
+          "addon_port": "Add-on port",
+          "agent_id": "Assist agent"
+        }
+      }
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "HomeBuddy Smart Glasses Service",
+        "description": "Update the add-on endpoint or the Assist agent used for agent mode.",
+        "data": {
+          "addon_host": "Add-on host",
+          "addon_port": "Add-on port",
+          "agent_id": "Assist agent"
+        }
+      }
+    }
+  }
+}
