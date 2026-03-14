@@ -104,7 +104,15 @@ def result_text(result_json: str) -> str:
     except json.JSONDecodeError:
         return ""
 
-    return (result.get("text") or result.get("partial") or "").strip()
+    text = (result.get("text") or result.get("partial") or "").strip()
+    if not text:
+        return ""
+
+    # Grammar-mode decoding can emit the explicit unknown token; suppress it
+    # before we forward partial/final text to clients.
+    text = re.sub(r"(?:^|\s)\[unk\](?=\s|$)", " ", text)
+    text = re.sub(r"\s+", " ", text).strip()
+    return text
 
 
 @dataclass(slots=True)
