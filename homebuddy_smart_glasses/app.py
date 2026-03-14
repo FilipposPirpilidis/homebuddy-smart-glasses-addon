@@ -939,7 +939,7 @@ def parse_args() -> ServerConfig:
     parser.add_argument("--websocket-port", type=int, default=8099)
     parser.add_argument("--accepted-audio-codecs", default='["pcm16","opus"]')
     parser.add_argument("--language", default="en")
-    parser.add_argument("--model-path", default="/models/vosk-model-small-en-us-0.15")
+    parser.add_argument("--model-path", default="/models/vosk-model-en-us-daanzu-20200905-lgraph")
     parser.add_argument("--stt-backend", default="vosk")
     parser.add_argument("--openai-api-key", default="")
     parser.add_argument("--openai-realtime-model", default="gpt-realtime-mini")

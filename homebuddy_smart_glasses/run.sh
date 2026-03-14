@@ -23,8 +23,8 @@ WHISPLAYBOT_AUTO_FINAL_MIN_SECONDS="$(bashio::config 'whisplaybot_auto_final_min
 WHISPLAYBOT_AUTO_FINAL_SILENCE_LEVEL="$(bashio::config 'whisplaybot_auto_final_silence_level')"
 
 case "${MODEL_VARIANT}" in
-  "0.15")
-    DEFAULT_MODEL_PATH="/models/vosk-model-small-en-us-0.15"
+  "daanzu")
+    DEFAULT_MODEL_PATH="/models/vosk-model-en-us-daanzu-20200905-lgraph"
     ;;
   "zamia")
     DEFAULT_MODEL_PATH="/models/vosk-model-small-en-us-zamia-0.5"
@@ -35,7 +35,7 @@ case "${MODEL_VARIANT}" in
     ;;
 esac
 
-if [ "${MODEL_PATH}" = "/models/vosk-model-small-en-us-0.15" ] && [ -n "${DEFAULT_MODEL_PATH}" ]; then
+if [ "${MODEL_PATH}" = "/models/vosk-model-en-us-daanzu-20200905-lgraph" ] && [ -n "${DEFAULT_MODEL_PATH}" ]; then
   RESOLVED_MODEL_PATH="${DEFAULT_MODEL_PATH}"
 else
   RESOLVED_MODEL_PATH="${MODEL_PATH}"

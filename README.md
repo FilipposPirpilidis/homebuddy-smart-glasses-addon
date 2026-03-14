@@ -72,6 +72,10 @@ Vosk options:
 - `model_variant`
 - `model_path`
 
+Default Vosk model:
+
+- `vosk-model-en-us-daanzu-20200905-lgraph`
+
 OpenAI options:
 
 - `openai_api_key`

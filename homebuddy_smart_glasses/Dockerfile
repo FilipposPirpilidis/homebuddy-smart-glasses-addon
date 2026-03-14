@@ -2,7 +2,7 @@ ARG BUILD_FROM=ghcr.io/home-assistant/amd64-base-python:3.19
 FROM ${BUILD_FROM}
 
 ENV PYTHONUNBUFFERED=1
-ENV VOSK_MODEL_URL_015=https://alphacephei.com/vosk/models/vosk-model-small-en-us-0.15.zip
+ENV VOSK_MODEL_URL_DAANZU=https://alphacephei.com/vosk/models/vosk-model-en-us-daanzu-20200905-lgraph.zip
 ENV VOSK_MODEL_URL_ZAMIA=https://alphacephei.com/vosk/models/vosk-model-small-en-us-zamia-0.5.zip
 
 RUN apt-get update \
@@ -19,11 +19,11 @@ RUN apt-get update \
         vosk==0.3.45 \
         websockets==12.0 \
     && mkdir -p /models \
-    && curl -L "${VOSK_MODEL_URL_015}" -o /tmp/vosk-model-015.zip \
-    && unzip -q /tmp/vosk-model-015.zip -d /models \
+    && curl -L "${VOSK_MODEL_URL_DAANZU}" -o /tmp/vosk-model-daanzu.zip \
+    && unzip -q /tmp/vosk-model-daanzu.zip -d /models \
     && curl -L "${VOSK_MODEL_URL_ZAMIA}" -o /tmp/vosk-model-zamia.zip \
     && unzip -q /tmp/vosk-model-zamia.zip -d /models \
-    && rm -f /tmp/vosk-model-015.zip /tmp/vosk-model-zamia.zip \
+    && rm -f /tmp/vosk-model-daanzu.zip /tmp/vosk-model-zamia.zip \
     && rm -rf /var/lib/apt/lists/*
 
 COPY app.py /app.py
