@@ -71,6 +71,7 @@ Vosk options:
 
 - `model_variant`
 - `model_path`
+- `vosk_grammar_sentences`
 
 Default Vosk model:
 
@@ -92,6 +93,12 @@ WhisplayBot options:
 - `whisplaybot_auto_final_silence_ms`
 - `whisplaybot_auto_final_min_seconds`
 - `whisplaybot_auto_final_silence_level`
+
+Add-on config UI notes:
+
+- `stt_backend` is validated as one of `vosk`, `openai`, or `whisplaybot`
+- `model_variant` is validated as `daanzu` or `zamia`
+- Home Assistant add-on config supports fixed-choice validation, but it does not support conditionally hiding fields based on another option, so backend-specific fields remain visible and are only used by the selected backend
 
 ## Client protocol
 

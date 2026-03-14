@@ -1,0 +1,46 @@
+configuration:
+  stt_backend:
+    name: Speech-to-text backend
+    description: Select which speech-to-text backend the add-on should use.
+  model_variant:
+    name: Vosk model variant
+    description: Only used when the speech-to-text backend is set to Vosk.
+  model_path:
+    name: Vosk model path
+    description: Only used when the speech-to-text backend is set to Vosk.
+  vosk_grammar_sentences:
+    name: Vosk grammar sentences
+    description: Only used when the speech-to-text backend is set to Vosk. Add one sentence or phrase per entry. These act as Vosk grammar hints.
+  openai_api_key:
+    name: OpenAI API key
+    description: Only used when the speech-to-text backend is set to OpenAI.
+  openai_realtime_model:
+    name: OpenAI realtime model
+    description: Only used when the speech-to-text backend is set to OpenAI.
+  openai_transcription_model:
+    name: OpenAI transcription model
+    description: Only used when the speech-to-text backend is set to OpenAI.
+  openai_prompt:
+    name: OpenAI prompt
+    description: Only used when the speech-to-text backend is set to OpenAI.
+  whisplaybot_recognize_url:
+    name: WhisplayBot recognize URL
+    description: Only used when the speech-to-text backend is set to WhisplayBot.
+  whisplaybot_timeout_seconds:
+    name: WhisplayBot timeout seconds
+    description: Only used when the speech-to-text backend is set to WhisplayBot.
+  whisplaybot_partial_window_seconds:
+    name: WhisplayBot partial window seconds
+    description: Only used when the speech-to-text backend is set to WhisplayBot.
+  whisplaybot_partial_inference_seconds:
+    name: WhisplayBot partial inference seconds
+    description: Only used when the speech-to-text backend is set to WhisplayBot.
+  whisplaybot_auto_final_silence_ms:
+    name: WhisplayBot auto-final silence ms
+    description: Only used when the speech-to-text backend is set to WhisplayBot.
+  whisplaybot_auto_final_min_seconds:
+    name: WhisplayBot auto-final minimum seconds
+    description: Only used when the speech-to-text backend is set to WhisplayBot.
+  whisplaybot_auto_final_silence_level:
+    name: WhisplayBot auto-final silence level
+    description: Only used when the speech-to-text backend is set to WhisplayBot.

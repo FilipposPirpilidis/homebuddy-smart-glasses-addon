@@ -117,6 +117,7 @@ class ServerConfig:
     language: str
     model_path: str
     stt_backend: str
+    vosk_grammar_sentences: tuple[str, ...]
     openai_api_key: str
     openai_realtime_model: str
     openai_transcription_model: str
@@ -194,7 +195,17 @@ class VoskBackend:
             raise RuntimeError("Vosk backend expects PCM16 mono audio")
 
         self.last_partial_text = ""
-        self.recognizer = KaldiRecognizer(self.model, float(state.rate))
+        if self.cfg.vosk_grammar_sentences:
+            grammar_items = list(self.cfg.vosk_grammar_sentences)
+            if "[unk]" not in grammar_items:
+                grammar_items.append("[unk]")
+            self.recognizer = KaldiRecognizer(
+                self.model,
+                float(state.rate),
+                json.dumps(grammar_items),
+            )
+        else:
+            self.recognizer = KaldiRecognizer(self.model, float(state.rate))
         self.recognizer.SetWords(True)
 
     async def process_chunk(self, payload: bytes, _state: AudioState) -> None:
@@ -811,6 +822,25 @@ def parse_audio_codecs(raw_value: str) -> tuple[str, ...]:
     return tuple(dict.fromkeys(codecs or ["pcm16"]))
 
 
+def parse_string_list(raw_value: str) -> tuple[str, ...]:
+    raw_value = (raw_value or "").strip()
+    if not raw_value:
+        return ()
+
+    values: list[str]
+    if raw_value.startswith("["):
+        try:
+            decoded = json.loads(raw_value)
+        except json.JSONDecodeError:
+            decoded = []
+        values = [str(item).strip() for item in decoded if str(item).strip()]
+    else:
+        normalized = raw_value.replace("\r", "\n")
+        values = [item.strip() for item in normalized.splitlines() if item.strip()]
+
+    return tuple(dict.fromkeys(values))
+
+
 def build_audio_decoder(codec: str) -> AudioDecoder:
     if codec == "opus":
         return OpusPacketDecoder()
@@ -894,6 +924,8 @@ async def serve(cfg: ServerConfig) -> None:
         LOGGER.info("Loading Vosk model from %s", cfg.model_path)
         vosk_model = Model(cfg.model_path)
         LOGGER.info("Vosk model loaded")
+        if cfg.vosk_grammar_sentences:
+            LOGGER.info("Using %d Vosk grammar sentence entries", len(cfg.vosk_grammar_sentences))
     if cfg.stt_backend == "openai":
         LOGGER.info(
             "OpenAI Realtime backend enabled with session model %s and transcription model %s",
@@ -941,6 +973,7 @@ def parse_args() -> ServerConfig:
     parser.add_argument("--language", default="en")
     parser.add_argument("--model-path", default="/models/vosk-model-en-us-daanzu-20200905-lgraph")
     parser.add_argument("--stt-backend", default="vosk")
+    parser.add_argument("--vosk-grammar-sentences", default="[]")
     parser.add_argument("--openai-api-key", default="")
     parser.add_argument("--openai-realtime-model", default="gpt-realtime-mini")
     parser.add_argument("--openai-transcription-model", default="gpt-4o-mini-transcribe")
@@ -954,6 +987,7 @@ def parse_args() -> ServerConfig:
     parser.add_argument("--whisplay-auto-final-silence-level", type=int, default=700)
     args = parser.parse_args()
     accepted_audio_codecs = parse_audio_codecs(args.accepted_audio_codecs)
+    vosk_grammar_sentences = parse_string_list(args.vosk_grammar_sentences)
 
     return ServerConfig(
         listen_host=args.listen_host,
@@ -964,6 +998,7 @@ def parse_args() -> ServerConfig:
         language=args.language,
         model_path=args.model_path,
         stt_backend=args.stt_backend,
+        vosk_grammar_sentences=vosk_grammar_sentences,
         openai_api_key=args.openai_api_key,
         openai_realtime_model=args.openai_realtime_model,
         openai_transcription_model=args.openai_transcription_model,

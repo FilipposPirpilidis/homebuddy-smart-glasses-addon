@@ -29,6 +29,7 @@ options:
   stt_backend: "vosk"
   model_variant: "daanzu"
   model_path: "/models/vosk-model-en-us-daanzu-20200905-lgraph"
+  vosk_grammar_sentences: []
   openai_api_key: ""
   openai_realtime_model: "gpt-realtime-mini"
   openai_transcription_model: "gpt-4o-mini-transcribe"
@@ -46,9 +47,11 @@ schema:
   accepted_audio_codecs:
     - str
   language: str
-  stt_backend: str
-  model_variant: str
+  stt_backend: "list(vosk|openai|whisplaybot)"
+  model_variant: "list(daanzu|zamia)"
   model_path: str
+  vosk_grammar_sentences:
+    - str
   openai_api_key: str
   openai_realtime_model: str
   openai_transcription_model: str

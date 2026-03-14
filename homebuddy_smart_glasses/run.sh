@@ -10,6 +10,7 @@ LANGUAGE="$(bashio::config 'language')"
 STT_BACKEND="$(bashio::config 'stt_backend')"
 MODEL_VARIANT="$(bashio::config 'model_variant')"
 MODEL_PATH="$(bashio::config 'model_path')"
+VOSK_GRAMMAR_SENTENCES="$(bashio::config 'vosk_grammar_sentences')"
 OPENAI_API_KEY="$(bashio::config 'openai_api_key')"
 OPENAI_REALTIME_MODEL="$(bashio::config 'openai_realtime_model')"
 OPENAI_TRANSCRIPTION_MODEL="$(bashio::config 'openai_transcription_model')"
@@ -100,5 +101,6 @@ else
     --accepted-audio-codecs "${ACCEPTED_AUDIO_CODECS}" \
     --language "${LANGUAGE}" \
     --stt-backend "vosk" \
-    --model-path "${RESOLVED_MODEL_PATH}"
+    --model-path "${RESOLVED_MODEL_PATH}" \
+    --vosk-grammar-sentences "${VOSK_GRAMMAR_SENTENCES}"
 fi
