@@ -48,7 +48,7 @@ schema:
     - str
   language: str
   stt_backend: "list(vosk|openai|whisplaybot)"
-  model_variant: "list(daanzu|zamia)"
+  model_variant: "list(daanzu)"
   model_path: str
   vosk_grammar_sentences:
     - str

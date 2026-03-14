@@ -97,7 +97,7 @@ WhisplayBot options:
 Add-on config UI notes:
 
 - `stt_backend` is validated as one of `vosk`, `openai`, or `whisplaybot`
-- `model_variant` is validated as `daanzu` or `zamia`
+- `model_variant` is validated as `daanzu`
 - Home Assistant add-on config supports fixed-choice validation, but it does not support conditionally hiding fields based on another option, so backend-specific fields remain visible and are only used by the selected backend
 
 ## Client protocol

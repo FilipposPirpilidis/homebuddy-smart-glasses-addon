@@ -199,6 +199,8 @@ class VoskBackend:
             grammar_items = list(self.cfg.vosk_grammar_sentences)
             if "[unk]" not in grammar_items:
                 grammar_items.append("[unk]")
+            # In the Python bindings, the 3-argument constructor uses the grammar recognizer path
+            # backed by `vosk_recognizer_new_grm`.
             self.recognizer = KaldiRecognizer(
                 self.model,
                 float(state.rate),

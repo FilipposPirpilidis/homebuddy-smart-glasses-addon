@@ -3,7 +3,6 @@ FROM ${BUILD_FROM}
 
 ENV PYTHONUNBUFFERED=1
 ENV VOSK_MODEL_URL_DAANZU=https://alphacephei.com/vosk/models/vosk-model-en-us-daanzu-20200905-lgraph.zip
-ENV VOSK_MODEL_URL_ZAMIA=https://alphacephei.com/vosk/models/vosk-model-small-en-us-zamia-0.5.zip
 
 RUN apt-get update \
     && apt-get install -y --no-install-recommends \
@@ -21,9 +20,7 @@ RUN apt-get update \
     && mkdir -p /models \
     && curl -L "${VOSK_MODEL_URL_DAANZU}" -o /tmp/vosk-model-daanzu.zip \
     && unzip -q /tmp/vosk-model-daanzu.zip -d /models \
-    && curl -L "${VOSK_MODEL_URL_ZAMIA}" -o /tmp/vosk-model-zamia.zip \
-    && unzip -q /tmp/vosk-model-zamia.zip -d /models \
-    && rm -f /tmp/vosk-model-daanzu.zip /tmp/vosk-model-zamia.zip \
+    && rm -f /tmp/vosk-model-daanzu.zip \
     && rm -rf /var/lib/apt/lists/*
 
 COPY app.py /app.py

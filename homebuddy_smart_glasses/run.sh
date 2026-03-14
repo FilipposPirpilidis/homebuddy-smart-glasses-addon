@@ -27,9 +27,6 @@ case "${MODEL_VARIANT}" in
   "daanzu")
     DEFAULT_MODEL_PATH="/models/vosk-model-en-us-daanzu-20200905-lgraph"
     ;;
-  "zamia")
-    DEFAULT_MODEL_PATH="/models/vosk-model-small-en-us-zamia-0.5"
-    ;;
   *)
     bashio::log.warning "Unknown model_variant '${MODEL_VARIANT}', falling back to model_path"
     DEFAULT_MODEL_PATH=""
