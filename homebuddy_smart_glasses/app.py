@@ -204,7 +204,12 @@ class VoskBackend:
 
         self.last_partial_text = ""
         if self.cfg.vosk_grammar_sentences:
-            grammar_items = list(self.cfg.vosk_grammar_sentences)
+            grammar_items: list[str] = []
+            for sentence in self.cfg.vosk_grammar_sentences:
+                normalized = sentence.strip().lower()
+                if normalized:
+                    grammar_items.append(normalized)
+            grammar_items = list(dict.fromkeys(grammar_items))
             if "[unk]" not in grammar_items:
                 grammar_items.append("[unk]")
             # In the Python bindings, the 3-argument constructor uses the grammar recognizer path
